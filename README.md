@@ -1,93 +1,69 @@
 # FieldLens
 
-**Point your phone at something. FieldLens names it and tells you what to look for.**
-
-FieldLens is a mobile web app that reads the photo on your phone and explains it: what
-the thing is, how to tell it apart from its look-alikes, and which details are worth a
-closer look. It then draws a field-guide plate of your subject and can read the answer
-aloud.
-
 [![Made with pollinations.ai](https://raw.githubusercontent.com/pollinations/pollinations/main/packages/ui/src/brand/badge-made-with.svg)](https://pollinations.ai/?ref=badge)
 
-## Try it
+**Point your phone at anything. FieldLens tells you what it is and what to look for.**
 
-**[fieldlens.app](https://marcus-mok-gh.github.io/fieldlens/)** — open it on a phone,
-sign in with Pollinations, point the camera at something.
+FieldLens is a small mobile web app. Take a photo of a plant, a rock, a bird, a dish or a building, and a vision model reads the picture, names the subject, explains it, and lists the signs that confirm the identification. You can then ask follow-up questions, have an image model draw a field-guide plate of what you photographed, and have a speech model read the answer back to you.
+
+Every request is paid for by you, from your own Pollinations balance. The app never holds a secret key and never pays on your behalf.
+
+Live app: **https://marcus-mok-gh.github.io/fieldlens/**
 
 ## How it works
 
-Everything runs on Pollinations, through one API and one account:
+1. **Sign in.** The app uses [Pollinations Pay](https://github.com/pollinations/pollinations/blob/main/BRING_YOUR_OWN_POLLEN.md): the `pk_` App Key in `app.js` identifies FieldLens, and Pollinations hands the visitor a scoped `sk_` key for their own balance. The key lives in `sessionStorage` and never leaves the browser.
+2. **Point and shoot.** `getUserMedia` opens the rear camera. The photo is downscaled in the browser and sent as a data URL.
+3. **Read.** The photo goes to a vision model on `https://gen.pollinations.ai/v1/chat/completions` as an `image_url` part. The answer streams back and is rendered as a title, a short explanation and a *Look for* list.
+4. **Draw.** *Illustrate* sends the field notes to an image model on `/v1/images/generations` and shows a natural-history plate of your specimen.
+5. **Listen.** *Read aloud* sends the summary to a speech model on `/v1/audio/speech` and plays it.
 
-| Step | Model | What it does |
+## Models
+
+Every default model is free to use with a Quest balance (`paid_only: false`).
+
+| Role | Model | Endpoint |
 | --- | --- | --- |
-| Identify | `openai/gpt-5.4-nano` (vision) | Reads the photo and streams the field notes back |
-| Illustrate | `tongyi-mai/z-image-turbo` | Draws a natural-history plate of what you photographed |
-| Read aloud | `openai/tts-1` | Speaks the summary |
+| Vision + text | `openai/gpt-5.4-nano` | `/v1/chat/completions` |
+| Image | `tongyi-mai/z-image-turbo` | `/v1/images/generations` |
+| Speech | `openai/tts-1` | `/v1/audio/speech` |
 
-Every model is free-tier, so a Quest balance is enough.
-
-### You pay from your own balance
-
-FieldLens never holds a key of its own. Sign-in is
-[Pollinations Pay](https://github.com/pollinations/pollinations/blob/main/BRING_YOUR_OWN_POLLEN.md):
-the `<polli-connect>` button sends the visitor to Pollinations, the visitor approves a
-scoped key from their own account, and that key is what pays for every request. The
-header shows the remaining balance, so the cost of each scan is visible.
-
-The app key (`pk_…`) is a publishable App Key. It identifies the app and carries no
-value of its own.
-
-## Features
-
-- **Live camera** with a one-tap shutter, plus photo upload when the camera is not
-  available.
-- **Focus chips** — Auto, Plant, Tree, Rock, Animal, Bird, Insect, Food, Art, Text,
-  Landmark — that steer the model towards what you actually want to know.
-- **Streamed answers** in three parts: what it is, why it looks like that, and a
-  *Look for* list of the signs that confirm it.
-- **Follow-up questions** about the same photo.
-- **Illustrate** draws a field-guide plate from the identification.
-- **Read aloud** speaks the summary.
+The models are constants at the top of `app.js`, so you can point the app at a different vision, image or speech model without touching anything else.
 
 ## Run it locally
 
-It is a static page with no build step:
+The app is plain HTML, CSS and JavaScript with no build step. Any static server works, but the camera needs a secure context, so use `localhost` or HTTPS.
 
 ```bash
 git clone https://github.com/Marcus-Mok-GH/fieldlens.git
 cd fieldlens
-python3 -m http.server 8080
+python3 -m http.server 8000
+# open http://localhost:8000
 ```
 
-Then open <http://localhost:8080>. The camera needs a secure context, so use HTTPS or
-a tunnel for camera access on a phone; the upload button works over plain HTTP.
-
-## Configuration
-
-Everything configurable sits at the top of `app.js`:
+Set your own App Key in `app.js` if you fork it:
 
 ```js
 const CONFIG = {
-    appKey: "pk_…",
-    genUrl: "https://gen.pollinations.ai",
-    visionModel: "openai/gpt-5.4-nano",
-    imageModel: "tongyi-mai/z-image-turbo",
-    speechModel: "openai/tts-1",
-    maxImageEdge: 1280,
-};
+    appKey: "pk_your_app_key",
+    ...
 ```
 
-The App Key's Redirect URI must be the page URL, for example
-`https://marcus-mok-gh.github.io/fieldlens/`.
+Register `http://localhost:8000` as a Redirect URI on that App Key.
 
 ## Files
 
-```
-index.html   markup
-styles.css   styling
-app.js       camera, Pollinations calls, rendering
-```
+| File | What it holds |
+| --- | --- |
+| `index.html` | Markup: capture view, result view, the `<polli-connect>` sign-in |
+| `styles.css` | Mobile-first dark theme, safe-area aware |
+| `app.js` | Camera, Pollinations calls, rendering |
+| `favicon.svg` | App icon |
 
-## Credits
+## Privacy
 
-Built with [Pollinations](https://pollinations.ai) models and Pollinations Pay.
+Photos are resized in the browser and sent straight to `gen.pollinations.ai` for analysis. Nothing is stored on a server, and FieldLens has no backend of its own.
+
+## License
+
+MIT
