@@ -22,13 +22,21 @@ Live app: **https://marcus-mok-gh.github.io/fieldlens/**
 
 ## Models
 
-Every default model is free to use with a Quest balance (`paid_only: false`).
+Every default is in the live model catalog with `paid_only: false`, so a user can run them on a Quest balance.
 
-| Role | Model | Endpoint |
-| --- | --- | --- |
-| Vision + text | `openai/gpt-5.4-nano` | `/v1/chat/completions` |
-| Image | `tongyi-mai/z-image-turbo` | `/v1/images/generations` |
-| Speech | `openai/tts-1` | `/v1/audio/speech` |
+| Role | Model | `paid_only` | Input | Output | Endpoint |
+| --- | --- | --- | --- | --- | --- |
+| Vision + text | `openai/gpt-5.4-nano` | false | text, image | text | `/v1/chat/completions` |
+| Image | `tongyi-mai/z-image-turbo` | false | text | image | `/v1/images/generations` |
+| Speech | `openai/tts-1` | false | text | audio | `/v1/audio/speech` |
+
+The catalog entries are copied verbatim into [`models.json`](models.json), read from <https://gen.pollinations.ai/models> on 2026-11-18:
+
+```json
+{"name":"openai/gpt-5.4-nano","paid_only":false,"input_modalities":["text","image"],"output_modalities":["text"]}
+{"name":"tongyi-mai/z-image-turbo","paid_only":false,"input_modalities":["text"],"output_modalities":["image"]}
+{"name":"openai/tts-1","paid_only":false,"input_modalities":["text"],"output_modalities":["audio"]}
+```
 
 The models are constants at the top of `app.js`, so you can point the app at a different vision, image or speech model without touching anything else.
 
