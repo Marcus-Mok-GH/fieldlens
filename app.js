@@ -261,7 +261,6 @@ async function startCamera() {
         state.stream = stream;
         els.preview.srcObject = stream;
         els.preview.hidden = false;
-        els.still.hidden = true;
         await els.preview.play().catch(() => {});
     } catch {
         els.preview.hidden = true;
@@ -661,7 +660,6 @@ function bind() {
 function init() {
     Object.assign(els, {
         preview: $("preview"),
-        still: $("still"),
         veilTitle: $("veil-title"),
         veilNote: $("veil-note"),
         focusStrip: $("focus-strip"),
