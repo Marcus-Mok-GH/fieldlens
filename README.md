@@ -10,9 +10,11 @@ Every request is paid for by you, from your own Pollinations balance. The app ne
 
 Live app: **https://marcus-mok-gh.github.io/fieldlens/**
 
+![FieldLens in the browser](screenshot.png)
+
 ## How it works
 
-1. **Sign in.** The app uses [Pollinations Pay](https://github.com/pollinations/pollinations/blob/main/BRING_YOUR_OWN_POLLEN.md): the `pk_` App Key in `app.js` identifies FieldLens, and Pollinations hands the visitor a scoped `sk_` key for their own balance. The key lives in `sessionStorage` and never leaves the browser.
+1. **Sign in.** The app uses [Pollinations Pay](https://github.com/pollinations/pollinations/blob/main/BRING_YOUR_OWN_POLLEN.md). Pollinations hands the visitor a scoped `sk_` key for their own balance; the key lives in `sessionStorage` and never leaves the browser. This checkout ships without an App Key, so it uses the plain **Sign in** link to the same authorize screen and the traffic is not attributed to an app. Add a publishable `pk_` key in `app.js` and the official *Connect* button appears instead, with the budget, expiry and model scopes the visitor approves.
 2. **Point and shoot.** `getUserMedia` opens the rear camera. The photo is downscaled in the browser and sent as a data URL.
 3. **Read.** The photo goes to a vision model on `https://gen.pollinations.ai/v1/chat/completions` as an `image_url` part. The answer streams back and is rendered as a title, a short explanation and a *Look for* list.
 4. **Draw.** *Illustrate* sends the field notes to an image model on `/v1/images/generations` and shows a natural-history plate of your specimen.
@@ -55,10 +57,11 @@ Register `http://localhost:8000` as a Redirect URI on that App Key.
 
 | File | What it holds |
 | --- | --- |
-| `index.html` | Markup: capture view, result view, the `<polli-connect>` sign-in |
+| `index.html` | Markup: capture view and result view |
 | `styles.css` | Mobile-first dark theme, safe-area aware |
 | `app.js` | Camera, Pollinations calls, rendering |
 | `favicon.svg` | App icon |
+| `screenshot.png` | Screenshot used for the app catalog |
 
 ## Privacy
 
