@@ -51,17 +51,10 @@
                 </svg>
                 <span class="brand-name">FieldLens</span>
             </a>
-            <div class="topbar-right">
+            <div class="topbar-right" id="topbar-right">
                 <span class="balance" id="balance" hidden></span>
-                <polli-connect
-                    id="connect"
-                    app-key=""
-                    budget="5"
-                    expiry="30"
-                    models="text,image,audio"
-                    permissions="usage"
-                    menu-links='[{"label":"Quests","href":"https://enter.pollinations.ai/quests","icon":"app"}]'
-                ></polli-connect>
+                <!-- The Pollinations Pay button is inserted here when the app
+                     has a publishable App Key. -->
                 <button class="signin" id="signin-btn" type="button" hidden>
                     Sign in
                 </button>
@@ -79,6 +72,22 @@
                         aria-label="Live camera preview"
                     ></video>
                     <div class="stage-frame" aria-hidden="true"></div>
+
+                    <div class="stage-glyph" aria-hidden="true">
+                        <svg
+                            viewBox="0 0 48 48"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.6"
+                        >
+                            <circle cx="24" cy="24" r="13" />
+                            <circle cx="24" cy="24" r="6" />
+                            <path
+                                d="M24 4v7M24 37v7M4 24h7M37 24h7"
+                                stroke-linecap="round"
+                            />
+                        </svg>
+                    </div>
 
                     <div class="stage-veil" id="stage-veil">
                         <p class="veil-title" id="veil-title">

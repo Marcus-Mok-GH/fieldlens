@@ -263,7 +263,7 @@ function setConnected(connected) {
         ? "A plant, a rock, a bird, a dish, a building — FieldLens names it and tells you what to look for."
         : "Sign in with Pollinations to identify photos. You pay from your own balance, one request at a time.";
     els.shutter.disabled = !connected;
-    if (!els.connect.hidden) return;
+    if (els.connect) return;
     els.signinBtn.hidden = false;
     els.signinBtn.textContent = connected ? "Sign out" : "Sign in";
 }
@@ -290,6 +290,7 @@ async function refreshBalance() {
 
 async function startCamera() {
     if (!navigator.mediaDevices?.getUserMedia) {
+        els.stage.classList.add("no-camera");
         els.veilNote.textContent =
             "This browser cannot open a camera. Use the Photo button to upload a picture instead.";
         return;
@@ -304,10 +305,12 @@ async function startCamera() {
             audio: false,
         });
         state.stream = stream;
+        els.stage.classList.remove("no-camera");
         els.preview.srcObject = stream;
         els.preview.hidden = false;
         await els.preview.play().catch(() => {});
     } catch {
+        els.stage.classList.add("no-camera");
         els.preview.hidden = true;
         els.veilNote.textContent =
             "No camera available. Use the Photo button to upload a picture instead.";
@@ -622,6 +625,35 @@ function setBusy(busy) {
 
 /* ------------------------------------------------------------------- init */
 
+/**
+ * Pollinations Pay renders the official connect button, but only for an app
+ * with a publishable App Key. Without one the app falls back to the plain
+ * authorize link, which still hands the visitor a scoped key for their own
+ * balance.
+ */
+function createConnectButton() {
+    if (!CONFIG.appKey.startsWith("pk_")) return null;
+    if (!customElements.get("polli-connect")) return null;
+    const connect = document.createElement("polli-connect");
+    connect.setAttribute("app-key", CONFIG.appKey);
+    connect.setAttribute("budget", "5");
+    connect.setAttribute("expiry", "30");
+    connect.setAttribute("models", "text,image,audio");
+    connect.setAttribute("permissions", "usage");
+    connect.setAttribute(
+        "menu-links",
+        JSON.stringify([
+            {
+                label: "Quests",
+                href: "https://enter.pollinations.ai/quests",
+                icon: "app",
+            },
+        ]),
+    );
+    els.topbarRight.prepend(connect);
+    return connect;
+}
+
 function buildFocusStrip() {
     els.focusStrip.innerHTML = "";
     for (const focus of FOCUSES) {
@@ -691,7 +723,7 @@ function bind() {
         await askFollowUp(question);
     });
 
-    els.connect.addEventListener("change", () => {
+    els.connect?.addEventListener("change", () => {
         adoptKey(els.connect.apiKey || null);
     });
 
@@ -739,20 +771,15 @@ function init() {
         chatForm: $("chat-form"),
         chatInput: $("chat-input"),
         balance: $("balance"),
-        connect: $("connect"),
+        topbarRight: $("topbar-right"),
+        stage: $("stage"),
+        connect: null,
         signinBtn: $("signin-btn"),
         toast: $("toast"),
     });
 
-    // Pollinations Pay renders the official connect button when the app has
-    // a publishable key. Without one, sign in through the plain authorize
-    // link, which hands the visitor a scoped key for their own balance.
-    const hasConnect = Boolean(customElements.get("polli-connect"));
-    els.connect.hidden = !(hasConnect && CONFIG.appKey.startsWith("pk_"));
-    els.signinBtn.hidden = !els.connect.hidden;
-    if (!els.connect.hidden) {
-        els.connect.setAttribute("app-key", CONFIG.appKey);
-    }
+    els.connect = createConnectButton();
+    els.signinBtn.hidden = Boolean(els.connect);
 
     buildFocusStrip();
     bind();
