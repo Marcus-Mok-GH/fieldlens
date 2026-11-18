@@ -18,10 +18,6 @@
     box-sizing: border-box;
 }
 
-[hidden] {
-    display: none !important;
-}
-
 /* Layout rules set display on these sections, which would otherwise beat the
    hidden attribute. */
 [hidden] {
