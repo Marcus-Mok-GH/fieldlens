@@ -8,13 +8,19 @@
  */
 
 const CONFIG = {
-    appKey: "pk_REPLACE_ME",
+    // Publishable App Key (pk_...) from enter.pollinations.ai/keys?tab=app.
+    // It identifies FieldLens on the consent screen. Without it the app falls
+    // back to a plain Pollinations sign-in link.
+    appKey: "",
     genUrl: "https://gen.pollinations.ai",
+    enterUrl: "https://enter.pollinations.ai",
     visionModel: "openai/gpt-5.4-nano",
     imageModel: "tongyi-mai/z-image-turbo",
     speechModel: "openai/tts-1",
     maxImageEdge: 1280,
 };
+
+const STORAGE_KEY = "fieldlens:api-key";
 
 const FOCUSES = [
     { id: "auto", label: "Auto", hint: "" },
@@ -212,6 +218,42 @@ async function apiError(response, fallback) {
 
 /* ------------------------------------------------------------------ auth */
 
+/* ------------------------------------------------------------- sign in */
+
+/**
+ * The key of a visitor who just came back from the consent screen, either in
+ * the URL fragment or from an earlier visit in this tab.
+ */
+function readStoredKey() {
+    const hash = new URLSearchParams(location.hash.slice(1));
+    const fromHash = hash.get("api_key");
+    if (fromHash) {
+        history.replaceState({}, "", location.pathname + location.search);
+        sessionStorage.setItem(STORAGE_KEY, fromHash);
+        return fromHash;
+    }
+    try {
+        return sessionStorage.getItem(STORAGE_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function adoptKey(key) {
+    state.apiKey = key || null;
+    try {
+        if (state.apiKey) {
+            sessionStorage.setItem(STORAGE_KEY, state.apiKey);
+        } else {
+            sessionStorage.removeItem(STORAGE_KEY);
+        }
+    } catch {
+        /* A blocked sessionStorage must not break the sign-in. */
+    }
+    setConnected(Boolean(state.apiKey));
+    if (state.apiKey) refreshBalance();
+}
+
 function setConnected(connected) {
     els.balance.hidden = !connected;
     els.veilTitle.textContent = connected
@@ -221,6 +263,9 @@ function setConnected(connected) {
         ? "A plant, a rock, a bird, a dish, a building — FieldLens names it and tells you what to look for."
         : "Sign in with Pollinations to identify photos. You pay from your own balance, one request at a time.";
     els.shutter.disabled = !connected;
+    if (!els.connect.hidden) return;
+    els.signinBtn.hidden = false;
+    els.signinBtn.textContent = connected ? "Sign out" : "Sign in";
 }
 
 async function refreshBalance() {
@@ -647,9 +692,19 @@ function bind() {
     });
 
     els.connect.addEventListener("change", () => {
-        state.apiKey = els.connect.apiKey || null;
-        setConnected(Boolean(state.apiKey));
-        if (state.apiKey) refreshBalance();
+        adoptKey(els.connect.apiKey || null);
+    });
+
+    els.signinBtn.addEventListener("click", () => {
+        if (state.apiKey) {
+            adoptKey(null);
+            return;
+        }
+        const params = new URLSearchParams({
+            redirect_uri: `${location.origin}${location.pathname}`,
+            scope: "usage",
+        });
+        location.href = `${CONFIG.enterUrl}/authorize?${params}`;
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -685,13 +740,24 @@ function init() {
         chatInput: $("chat-input"),
         balance: $("balance"),
         connect: $("connect"),
+        signinBtn: $("signin-btn"),
         toast: $("toast"),
     });
 
-    els.connect.setAttribute("app-key", CONFIG.appKey);
+    // Pollinations Pay renders the official connect button when the app has
+    // a publishable key. Without one, sign in through the plain authorize
+    // link, which hands the visitor a scoped key for their own balance.
+    const hasConnect = Boolean(customElements.get("polli-connect"));
+    els.connect.hidden = !(hasConnect && CONFIG.appKey.startsWith("pk_"));
+    els.signinBtn.hidden = !els.connect.hidden;
+    if (!els.connect.hidden) {
+        els.connect.setAttribute("app-key", CONFIG.appKey);
+    }
+
     buildFocusStrip();
     bind();
     setConnected(false);
+    adoptKey(readStoredKey());
     startCamera();
 }
 

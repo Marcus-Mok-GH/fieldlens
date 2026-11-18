@@ -111,6 +111,22 @@ a {
     border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
 }
 
+/* The sign-in button carries a long label; on narrow phones swap it for a
+   short one so the top bar never overflows sideways. */
+@media (max-width: 480px) {
+    .topbar-right polli-connect button {
+        font-size: 0;
+        gap: 0;
+        padding-inline: 10px;
+    }
+
+    .topbar-right polli-connect button::after {
+        content: "Connect";
+        font-size: 0.82rem;
+        letter-spacing: 0;
+    }
+}
+
 /* ---------- layout ---------- */
 
 .main {
